@@ -28,7 +28,7 @@
       const id = (video.youtubeId || '').replace(/[^\w-]/g, ''); const href = id ? `https://www.youtube.com/watch?v=${id}` : video.url;
       const card = document.createElement('article'); card.className = 'video-card reveal visible';
       const a = document.createElement('a'); a.className = 'video-thumb'; a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; a.setAttribute('aria-label', `Watch ${video.title} on YouTube`);
-      const img = document.createElement('img'); img.loading = 'lazy'; img.alt = `${video.title} thumbnail`; img.src = video.thumbnail || (id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : '/assets/og-cover.svg'); img.onerror = () => { img.onerror = null; img.src = '/assets/og-cover.svg'; }; a.append(img);
+      const img = document.createElement('img'); img.loading = 'lazy'; img.alt = `${video.title} thumbnail`; img.src = video.thumbnail || (id ? `https://i.ytimg.com/vi/${id}/hqdefault.jpg` : 'assets/og-cover.svg'); img.onerror = () => { img.onerror = null; img.src = 'assets/og-cover.svg'; }; a.append(img);
       const copy = document.createElement('div'); copy.className = 'video-copy'; const small = document.createElement('small'); small.textContent = video.label || `FEATURED VIDEO / ${String(i + 1).padStart(2,'0')}`; const h = document.createElement('h3'); h.textContent = video.title; copy.append(small, h); card.append(a, copy); grid.append(card);
     });
   }
@@ -43,7 +43,7 @@
   }
   async function init() {
     $('#year').textContent = new Date().getFullYear();
-    try { const r = await fetch('/api/content', { headers: { Accept: 'application/json' } }); if (!r.ok) throw new Error('API unavailable'); content = await r.json(); applySite(content.site); renderTracks(); renderVideos(); }
+    try { const r = await fetch('api/content', { headers: { Accept: 'application/json' } }); if (!r.ok) throw new Error('API unavailable'); content = await r.json(); applySite(content.site); renderTracks(); renderVideos(); }
     catch { renderTracks(); renderVideos(); toast('Live content unavailable. Start the website server.'); }
     $('#playTrack').addEventListener('click', () => { if (!content.tracks?.length) return toast('Add tracks in Admin Panel first.'); if (audio.paused) audio.play().then(() => $('#playTrack').textContent = 'Ⅱ').catch(() => toast('Audio URL unavailable.')); else audio.pause(); });
     $('#prevTrack').addEventListener('click', () => loadTrack(active - 1, true)); $('#nextTrack').addEventListener('click', () => loadTrack(active + 1, true));
