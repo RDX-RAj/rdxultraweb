@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#080b09">
+<title>Music Universe ∞ | RDX Ultra Web</title>
+<style>
+:root{color-scheme:dark;--bg:#080b09;--panel:#111713;--text:#f5f7f4;--muted:#9ba69e;--green:#b7ff4a;--line:#29342b}
+.light{color-scheme:light;--bg:#f3f7f0;--panel:#fff;--text:#172016;--muted:#657164;--green:#477d00;--line:#dce5d8}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif;transition:.2s}
+header{padding:17px 5%;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.logo{font-weight:900;letter-spacing:1px}.logo span{color:var(--green)}
+button,a{cursor:pointer}button{background:var(--green);color:#10150c;border:0;border-radius:12px;padding:11px 15px;font-weight:800}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1100px;margin:auto;padding:32px 18px}
+.eyebrow{color:var(--green);font-weight:800;letter-spacing:3px;font-size:12px}
+h1{font-size:clamp(36px,8vw,68px);line-height:1.02;margin:12px 0}
+p{color:var(--muted);line-height:1.6}
+.search{display:flex;gap:10px;margin:24px 0}
+input{min-width:0;flex:1;padding:16px;border-radius:13px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:16px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:15px 0 25px}
+.chips button{background:var(--panel);color:var(--text);border:1px solid var(--line)}
+.chips button:hover{border-color:var(--green)}
+.status{font-size:14px;color:var(--muted);min-height:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:17px;overflow:hidden}
+.art{width:100%;aspect-ratio:1;object-fit:cover;background:#202820}
+.info{padding:13px}.song{font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.artist{font-size:13px;color:var(--muted);margin:5px 0 13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.actions{display:flex;gap:7px;flex-wrap:wrap}.actions button{padding:9px 11px;font-size:12px}
+.actions .secondary{background:transparent;color:var(--text);border:1px solid var(--line)}
+audio{width:100%;height:34px;margin-top:12px}
+footer{border-top:1px solid var(--line);padding:22px;text-align:center;color:var(--muted);font-size:13px;margin-top:40px}
+.note{border:1px solid var(--line);border-radius:14px;padding:15px;margin:25px 0;background:var(--panel);font-size:13px;color:var(--muted)}
+@media(max-width:480px){.search{flex-direction:column}.search button{width:100%}.wrap{padding-top:25px}}
+</style>
+</head>
+<body>
+<header>
+<a class="logo" href="index.html">RDX <span>ULTRA</span> WEB ∞</a>
+<button id="theme" type="button">☀️ Light mode</button>
+</header>
+<main class="wrap">
+<div class="eyebrow">YOUR MUSIC. YOUR UNIVERSE.</div>
+<h1>Music Universe <span style="color:var(--green)">∞</span></h1>
+<p>Discover songs, explore artists and play available previews.</p>
+<form class="search" id="searchForm">
+<input id="query" placeholder="Search songs, singers, albums..." aria-label="Search music" required>
+<button type="submit">🔎 Search</button>
+</form>
+<div class="chips">
+<button data-q="trending hits">🔥 Trending</button>
+<button data-q="Arijit Singh">🎤 Arijit Singh</button>
+<button data-q="lofi slowed reverb">🌙 Lofi</button>
+<button data-q="Punjabi hits">🎧 Punjabi</button>
+<button data-q="Rajasthani songs">🎶 Rajasthani</button>
+<button id="favs">❤️ Favourites</button>
+<button id="clear">✖ Clear</button>
+</div>
+<div class="status" id="status" role="status">Search for a song or artist to begin.</div>
+<section class="grid" id="results" aria-live="polite"></section>
+<div class="note">Music previews are supplied by the iTunes Search service where available. Full tracks may require the official music app or website. Search results and availability can vary by region.</div>
+</main>
+<footer>RDX Ultra Web ∞ · Crafted for music lovers</footer>
+<script>
+const $=s=>document.querySelector(s);
+const status=$('#status'), results=$('#results');
+let tracks=[], showingFavs=false;
+const getFavs=()=>{try{return JSON.parse(localStorage.getItem('rdxMusicFavs')||'[]')}catch{return []}};
+const saveFavs=x=>localStorage.setItem('rdxMusicFavs',JSON.stringify(x));
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function render(items){
+ results.innerHTML='';
+ if(!items.length){status.textContent='No songs found here. Try another search.';return}
+ status.textContent=items.length+' results';
+ for(const t of items){
+  const fav=getFavs().some(x=>x.trackId===t.trackId);
+  const card=document.createElement('article');card.className='card';
+  card.innerHTML=`<img class="art" loading="lazy" src="${esc(t.artworkUrl100||'')}" alt="Album artwork">
+  <div class="info"><div class="song" title="${esc(t.trackName)}">${esc(t.trackName||'Unknown song')}</div>
+  <div class="artist">${esc(t.artistName||'Unknown artist')} · ${esc(t.collectionName||'Single')}</div>
+  <div class="actions">
+  ${t.previewUrl?'<button data-play>▶ Preview</button>':''}
+  <button class="secondary" data-yt>▶ YouTube</button>
+  <button class="secondary" data-fav>${fav?'♥ Saved':'♡ Save'}</button>
+  </div><div data-audio></div></div>`;
+  if(!t.previewUrl)card.querySelector('[data-play]')?.remove();
+  card.querySelector('[data-yt]').onclick=()=>window.open('https://www.youtube.com/results?search_query='+encodeURIComponent(t.trackName+' '+t.artistName),'_blank','noopener');
+  card.querySelector('[data-fav]').onclick=()=>{
+   let f=getFavs();const i=f.findIndex(x=>x.trackId===t.trackId);
+   if(i>=0)f.splice(i,1);else f.push(t);
+   saveFavs(f);card.querySelector('[data-fav]').textContent=i>=0?'♡ Save':'♥ Saved';
+   if(showingFavs)render(getFavs());
+  };
+  const play=card.querySelector('[data-play]');
+  if(play)play.onclick=()=>{
+   document.querySelectorAll('audio').forEach(a=>a.pause());
+   const box=card.querySelector('[data-audio]');
+   if(!box.querySelector('audio'))box.innerHTML=`<audio controls autoplay src="${esc(t.previewUrl)}"></audio>`;
+   else{const a=box.querySelector('audio');a.play().catch(()=>{});}
+  };
+  results.appendChild(card);
+ }
+}
+async function search(q){
+ if(!q.trim())return;
+ showingFavs=false;status.textContent='Searching music…';results.innerHTML='';
+ try{
+  const url='https://itunes.apple.com/search?term='+encodeURIComponent(q)+'&entity=song&limit=30';
+  const r=await fetch(url);if(!r.ok)throw Error('Search service unavailable');
+  const data=await r.json();tracks=data.results||[];render(tracks);
+  if(!tracks.length)status.textContent='No results. Try a different song or artist.';
+ }catch(e){status.textContent='Could not load results. Check your internet and try again.'}
+}
+$('#searchForm').addEventListener('submit',e=>{e.preventDefault();search($('#query').value)});
+document.querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{$('#query').value=b.dataset.q;search(b.dataset.q)});
+$('#favs').onclick=()=>{showingFavs=true;render(getFavs())};
+$('#clear').onclick=()=>{results.innerHTML='';status.textContent='Search for a song or artist to begin.';$('#query').value='';showingFavs=false};
+$('#theme').onclick=()=>{document.body.classList.toggle('light');$('#theme').textContent=document.body.classList.contains('light')?'🌙 Dark mode':'☀️ Light mode';localStorage.setItem('rdxMusicTheme',document.body.classList.contains('light')?'light':'dark')};
+if(localStorage.getItem('rdxMusicTheme')==='light'){document.body.classList.add('light');$('#theme').textContent='🌙 Dark mode'}
+</script>
+</body>
+</html>
